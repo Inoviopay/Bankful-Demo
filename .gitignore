@@ -1,0 +1,54 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Credentials and secrets
+creds.txt
+*.pem
+*.key
+
+# PDF files
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Scripts and temporary files
+*.sh
+*.py
+*.txt
+!README.md
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+# Logs
+logs/
+*.log

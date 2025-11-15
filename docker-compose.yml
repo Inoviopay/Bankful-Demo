@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  bankful-demo:
+    build: .
+    container_name: bankful-inovio-demo
+    ports:
+      - "3000:3000"

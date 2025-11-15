@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bankful - Inovio Payment Integration Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bankful - Inovio Payment Integration Demo</h1>
+            <p class="subtitle">Interactive demonstration of three payment flows for Bankful's Shopify integration</p>
+        </header>
+
+        <!-- Global Credentials Section -->
+        <section class="credentials-section">
+            <h2>Inovio API Credentials</h2>
+            <p class="info-text">Enter your credentials once - they apply to all payment flows below</p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="username">API Username</label>
+                    <input type="text" id="username" placeholder="req_username">
+                </div>
+                <div class="form-group">
+                    <label for="password">API Password</label>
+                    <input type="password" id="password" placeholder="req_password">
+                </div>
+                <div class="form-group">
+                    <label for="siteId">Site ID</label>
+                    <input type="text" id="siteId" placeholder="site_id">
+                </div>
+                <div class="form-group">
+                    <label for="merchantAccountId">Merchant Account ID (Optional)</label>
+                    <input type="text" id="merchantAccountId" placeholder="Leave blank to use default">
+                </div>
+                <div class="form-group">
+                    <label for="productId">Product ID</label>
+                    <input type="text" id="productId" placeholder="li_prod_id_1">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="disableScrub" style="margin-right: 10px; width: auto;">
+                    <span>Disable Fraud Scrub Rules (for testing)</span>
+                </label>
+                <p class="small-text" style="margin-left: 30px;">Bypasses fraud screening to allow test transactions through</p>
+            </div>
+
+            <h2 style="margin-top: 40px;">Test Card & Billing Details</h2>
+            <p class="info-text">Enter once - used for all payment flows below</p>
+
+            <h3 style="margin-top: 20px; color: #666; font-size: 1rem;">Card Details</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="global-cardNumber">Card Number</label>
+                    <input type="text" id="global-cardNumber" value="4111111111111111">
+                </div>
+                <div class="form-group">
+                    <label for="global-expiryDate">Expiry Date (MMYYYY)</label>
+                    <input type="text" id="global-expiryDate" value="122030">
+                </div>
+                <div class="form-group">
+                    <label for="global-cvv">CVV</label>
+                    <input type="text" id="global-cvv" value="123">
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; color: #666; font-size: 1rem;">Customer Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="global-firstName">First Name</label>
+                    <input type="text" id="global-firstName" value="Test">
+                </div>
+                <div class="form-group">
+                    <label for="global-lastName">Last Name</label>
+                    <input type="text" id="global-lastName" value="User">
+                </div>
+                <div class="form-group full-width">
+                    <label for="global-email">Email</label>
+                    <input type="email" id="global-email" value="test@example.com">
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px; color: #666; font-size: 1rem;">Billing Address</h3>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="global-billingAddress">Street Address</label>
+                    <input type="text" id="global-billingAddress" value="123 Main Street">
+                </div>
+                <div class="form-group">
+                    <label for="global-billingCity">City</label>
+                    <input type="text" id="global-billingCity" value="Los Angeles">
+                </div>
+                <div class="form-group">
+                    <label for="global-billingState">State</label>
+                    <input type="text" id="global-billingState" value="CA">
+                </div>
+                <div class="form-group">
+                    <label for="global-billingZip">ZIP Code</label>
+                    <input type="text" id="global-billingZip" value="90001">
+                </div>
+                <div class="form-group">
+                    <label for="global-billingCountry">Country</label>
+                    <input type="text" id="global-billingCountry" value="US">
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="one-time">One-Time Transaction</button>
+            <button class="tab-button" data-tab="subscription">Subscription Flow</button>
+            <button class="tab-button" data-tab="card-update">Zero-Dollar Card Update</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- One-Time Transaction Tab -->
+            <div id="one-time" class="tab-pane active">
+                <h2>One-Time Transaction</h2>
+                <p class="flow-description">
+                    Standard payment flow where Shopify only requires notification of transaction status.
+                    <strong>No Network Transaction ID needed.</strong>
+                </p>
+
+                <form id="oneTimeForm" class="payment-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ot-amount">Transaction Amount</label>
+                            <input type="text" id="ot-amount" value="19.95" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Process One-Time Payment</button>
+                </form>
+
+                <div id="oneTimeResult" class="result-container" style="display: none;">
+                    <h3>Results</h3>
+                    <div id="oneTimeOutput"></div>
+                </div>
+            </div>
+
+            <!-- Subscription Flow Tab -->
+            <div id="subscription" class="tab-pane">
+                <h2>Subscription Flow</h2>
+                <p class="flow-description">
+                    Two-step process: <strong>Initial payment</strong> returns Network Transaction ID for Shopify to vault.
+                    <strong>Renewal payments</strong> use PAN + Network Transaction ID without CVV.
+                </p>
+
+                <!-- Step 1: Initial Subscription -->
+                <div class="subscription-step">
+                    <h3>Step 1: Initial Subscription Payment</h3>
+                    <form id="subscriptionInitialForm" class="payment-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="si-amount">Subscription Amount</label>
+                                <input type="text" id="si-amount" value="29.95" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Process Initial Subscription</button>
+                    </form>
+
+                    <div id="subscriptionInitialResult" class="result-container" style="display: none;">
+                        <h3>Step 1 Results</h3>
+                        <div id="subscriptionInitialOutput"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Renewal Payment -->
+                <div class="subscription-step">
+                    <h3>Step 2: Subscription Renewal Payment</h3>
+                    <p class="info-text">Uses PAN + Network Transaction ID from Step 1. <strong>No CVV required.</strong></p>
+
+                    <form id="subscriptionRenewalForm" class="payment-form">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="sr-networkTransactionId">Network Transaction ID (Auto-filled from Step 1)</label>
+                                <input type="text" id="sr-networkTransactionId" placeholder="Complete Step 1 first" required>
+                                <p class="small-text">This value is automatically populated when Step 1 completes successfully</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="sr-amount">Renewal Amount</label>
+                                <input type="text" id="sr-amount" value="29.95" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Process Renewal Payment</button>
+                    </form>
+
+                    <div id="subscriptionRenewalResult" class="result-container" style="display: none;">
+                        <h3>Step 2 Results</h3>
+                        <div id="subscriptionRenewalOutput"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zero-Dollar Card Update Tab -->
+            <div id="card-update" class="tab-pane">
+                <h2>Zero-Dollar Authorization (Card Update)</h2>
+                <p class="flow-description">
+                    Validates card without charging. Returns <strong>Network Transaction ID</strong> for Shopify to update card on file for existing subscriptions.
+                </p>
+
+                <form id="cardUpdateForm" class="payment-form">
+                    <div class="alert-info">
+                        <strong>Note:</strong> This will process a $0.00 authorization using the card details entered at the top.
+                        The response will include a Network Transaction ID for Shopify to use.
+                    </div>
+
+                    <button type="submit" class="btn-primary">Process Zero-Dollar Authorization</button>
+                </form>
+
+                <div id="cardUpdateResult" class="result-container" style="display: none;">
+                    <h3>Results</h3>
+                    <div id="cardUpdateOutput"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
