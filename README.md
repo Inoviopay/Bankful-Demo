@@ -1,44 +1,43 @@
 # Bankful - Inovio Payment Integration Demo
 
-**An interactive demonstration tool for Ann's team to understand and test the three payment flows required for Bankful's Shopify subscription integration with Inovio.**
+**A working demonstration of the three payment flows required for Bankful's Shopify subscription integration with Inovio.**
 
-## What Is This?
+This demo shows Ann's team exactly how to implement the flows described in the integration requirements.
 
-This is a **ready-to-run demo application** that shows exactly how to integrate Bankful's Shopify subscriptions with the Inovio payment gateway. It demonstrates:
+## What This Demo Shows
 
-1. **One-Time Transactions** - Standard payments (no recurring)
-2. **Subscription Payments** - Initial payment that returns a Network Transaction ID, plus renewals using that ID
-3. **Zero-Dollar Card Updates** - Validate new cards without charging
+Based on Ann's requirements, Shopify needs three payment flows:
 
-**Key Feature:** The demo shows you the exact API requests and responses, highlighting the critical **Network Transaction ID** that Shopify needs for subscription management.
+1. **One-Time Transactions** - Process payment, notify Shopify of success/failure
+2. **Subscription Payments** - Process payment, return Network Transaction ID to Shopify
+3. **Zero-Dollar Card Updates** - Validate new card, return Network Transaction ID to Shopify
 
-## Quick Start (3 Steps)
+**The critical concept:** The **Network Transaction ID** is what Shopify uses to vault cards and process subscription renewals without requiring CVV.
+
+## Quick Start
 
 ### Prerequisites
-
 - Docker and Docker Compose installed
 
-### 1. Start the Demo
+### Run the Demo
 
 ```bash
 docker-compose up --build
 ```
 
-### 2. Open Your Browser
+Open your browser to: **http://localhost:3000**
 
-Navigate to: **http://localhost:3000**
+### Enter Your Inovio Credentials
 
-### 3. Enter Your Inovio Credentials
+At the top of the page:
+- Inovio API Username
+- Inovio API Password
+- Site ID
+- Product ID
+- Check **"Disable Fraud Scrub Rules"** (for testing)
+- Leave Merchant Account ID blank
 
-At the top of the page, enter:
-- Your Inovio API Username
-- Your Inovio API Password
-- Your Site ID
-- Your Product ID
-- Check the **"Disable Fraud Scrub Rules"** box (for testing)
-- Leave **Merchant Account ID blank** (optional - Inovio will use your default)
-
-**That's it!** Card details and billing address are pre-filled with test data. Just click the buttons to test each flow.
+All card details and billing information are pre-filled with test data. Just click the buttons to see each flow in action.
 
 ### Stop the Demo
 
@@ -46,300 +45,161 @@ At the top of the page, enter:
 docker-compose down
 ```
 
-## Pre-Filled Test Data
-
-The demo loads with these **default values** (you can change them if needed):
-
-**Card Details:**
-- Card Number: `4111111111111111` (Visa test card)
-- Expiry Date: `122030` (December 2030)
-- CVV: `123`
-
-**Customer Information:**
-- Name: `Test User`
-- Email: `test@example.com`
-
-**Billing Address:**
-- `123 Main Street, Los Angeles, CA 90001, US`
-
-**Transaction Amounts:**
-- One-Time: `$19.95`
-- Subscriptions: `$29.95`
-
-## How to Test Each Flow
+## The Three Flows
 
 ### Flow 1: One-Time Transaction
 
-**Purpose:** Simple payment with no recurring charges.
+**What Shopify Needs:** Just notification of transaction success or failure.
 
-1. Click the **"One-Time Transaction"** tab
-2. The form shows only the **Amount** field (pre-filled with `19.95`)
-3. Click **"Process One-Time Payment"**
-4. **View the Results:**
-   - See the exact JSON request sent to Inovio
-   - See the full JSON response from Inovio
-   - Transaction status: APPROVED or DECLINED
-   - Notice: **No Network Transaction ID** (not needed for one-time payments)
+**What the Demo Shows:**
+- Click the "One-Time Transaction" tab
+- Click "Process One-Time Payment"
+- See the exact API request/response
+- Notice: No Network Transaction ID needed
 
-**For Shopify:** Just notify Shopify if payment succeeded or failed. Nothing else needed.
+**Implementation:** Process payment with Inovio, return success/failure to Shopify. Done.
+
+---
 
 ### Flow 2: Subscription Payment (Two Steps)
 
-**Purpose:** Set up a recurring subscription and demonstrate renewal without CVV.
+**What Shopify Needs:** Network Transaction ID to vault the card for future renewals.
 
 #### Step 1: Initial Subscription Payment
 
-1. Click the **"Subscription Flow"** tab
-2. In **Step 1**, the form shows only the **Amount** field (pre-filled with `29.95`)
-3. Click **"Process Initial Subscription"**
-4. **Watch What Happens:**
-   - The **Network Transaction ID** appears in a **large green box** with a copy button
-   - The message says: **"This value has been automatically filled into Step 2 below"**
-   - The page **scrolls down** to Step 2
-   - Step 2 shows a **green success message**: "Step 2 is ready!"
-   - The Network Transaction ID field in Step 2 **pulses green** (auto-filled)
+**What the Demo Shows:**
+- Click the "Subscription Flow" tab
+- Click "Process Initial Subscription"
+- **Watch:** Network Transaction ID appears in a large green box
+- **Watch:** The value auto-fills into Step 2 below
+- **Watch:** Page scrolls to Step 2 with success message
 
-**For Shopify:** Return this Network Transaction ID to Shopify. They store it and associate it with the customer's subscription.
+**Implementation:** Process payment with Inovio using `request_rebill=1`, extract `CARD_BRAND_TRANSID` from response, return this Network Transaction ID to Shopify.
 
 #### Step 2: Subscription Renewal
 
-1. **Notice:** The Network Transaction ID and Amount are **already filled in** from Step 1
-2. **Important:** There's **NO CVV field** - renewals don't require CVV!
-3. Click **"Process Renewal Payment"**
-4. **View the Results:**
-   - The request includes the PAN + Network Transaction ID
-   - The request does NOT include CVV
-   - Payment processes successfully using the stored Network Transaction ID
+**What Shopify Needs:** Process recurring payment using PAN + Network Transaction ID (no CVV).
 
-**For Shopify:** When a subscription renews, Shopify sends you the PAN + Network Transaction ID (no CVV). You use these to charge the customer.
+**What the Demo Shows:**
+- Network Transaction ID and amount are already filled in from Step 1
+- **Notice:** No CVV field - renewals don't require CVV
+- Click "Process Renewal Payment"
+- See the request includes PAN + Network Transaction ID but NOT CVV
 
-### Flow 3: Zero-Dollar Authorization (Card Update)
+**Implementation:** When Shopify sends renewal request with PAN + Network Transaction ID (no CVV), process payment with Inovio using `request_rebill=2` and `orig_card_brand_transid`, return success/failure to Shopify.
 
-**Purpose:** Update a customer's card on file without charging them.
+---
 
-1. Click the **"Zero-Dollar Card Update"** tab
-2. **Notice:** There are **NO form fields** - it uses the card details from the top
-3. Click **"Process Zero-Dollar Authorization"**
-4. **View the Results:**
-   - A `$0.00` authorization is processed
-   - The **Network Transaction ID** appears in a green box
-   - The card is validated without any charge
+### Flow 3: Zero-Dollar Card Update
 
-**For Shopify:** When a customer wants to update their payment method for a subscription, use this flow. Return the Network Transaction ID to Shopify so they can update their records.
+**What Shopify Needs:** Network Transaction ID for the new card to update subscription.
+
+**What the Demo Shows:**
+- Click the "Zero-Dollar Card Update" tab
+- Click "Process Zero-Dollar Authorization"
+- See $0.00 authorization processed
+- Network Transaction ID appears in green box
+
+**Implementation:** Process $0.00 authorization with Inovio using `request_action=CCAUTHORIZE` and `li_value_1=0.00`, extract `CARD_BRAND_TRANSID`, return this Network Transaction ID to Shopify.
 
 ## Understanding the Network Transaction ID
 
-The **Network Transaction ID** is critical for Shopify subscription management:
+The Network Transaction ID is returned by Inovio in these response fields (check in this order):
+1. `CARD_BRAND_TRANSID` (primary)
+2. `PROC_REFERENCE_NUM` (fallback)
+3. `PROC_RETRIEVAL_NUM` (fallback)
 
-- **Field Names in Inovio Response:**
-  - `CARD_BRAND_TRANSID` (primary)
-  - `PROC_REFERENCE_NUM` (fallback)
-  - `PROC_RETRIEVAL_NUM` (fallback)
+**When to return it to Shopify:**
+- ✓ Initial subscription payment
+- ✓ Zero-dollar card updates
+- ✗ One-time transactions (not needed)
+- ✗ Subscription renewals (used as input, not output)
 
-- **When It's Required:**
-  - Initial subscription payment (to vault the card)
-  - Zero-dollar authorization (to update card on file)
+## What's in the Code
 
-- **When It's NOT Required:**
-  - One-time transactions
-  - Subscription renewals (used as input, not output)
+### Backend (`src/`)
+- `server.js` - Express server with comprehensive inline documentation for Ann's team
+- `inovioClient.js` - Inovio API client with integration notes
 
-## Architecture
+**The backend code includes detailed comments explaining:**
+- Exact parameters for each flow
+- Required vs optional fields
+- How to extract Network Transaction ID
+- Shopify integration points
+- Common errors and solutions
 
-### Backend (Node.js/Express)
+### Frontend (`public/`)
+- Interactive UI showing exact API requests/responses
+- Pre-filled test data (Visa test card, test customer info)
+- Visual feedback (green boxes, auto-population, copy buttons)
 
-- `src/server.js` - Express server with 4 API endpoints
-- `src/inovioClient.js` - Inovio API client wrapper
+### Docker
+- `Dockerfile` - Node.js 18 Alpine
+- `docker-compose.yml` - Single container, no volumes
 
-**API Endpoints:**
-- `POST /api/one-time` - One-time payment
-- `POST /api/subscription-initial` - Initial subscription
-- `POST /api/subscription-renewal` - Renewal payment
-- `POST /api/card-update` - Zero-dollar auth
+## For Ann's Team
 
-### Frontend (HTML/CSS/JavaScript)
+### Implementation Checklist
 
-- `public/index.html` - Tabbed interface with shared credentials
-- `public/styles.css` - Responsive styling
-- `public/app.js` - Form handling and API communication
+**One-Time Payments:**
+- [ ] Accept payment from Shopify
+- [ ] Send to Inovio with `request_action=CCAUTHCAP`
+- [ ] Return success/failure to Shopify
 
-### Docker Configuration
+**Initial Subscription Payments:**
+- [ ] Accept payment from Shopify
+- [ ] Send to Inovio with `request_action=CCAUTHCAP` and `request_rebill=1`
+- [ ] Extract `CARD_BRAND_TRANSID` from response
+- [ ] **Return Network Transaction ID to Shopify**
 
-- `Dockerfile` - Node.js 18 Alpine image
-- `docker-compose.yml` - Single-container deployment (no volumes)
-- All source files copied into container
+**Subscription Renewal Payments:**
+- [ ] Accept PAN + Network Transaction ID from Shopify (no CVV)
+- [ ] Send to Inovio with `request_action=CCAUTHCAP`, `request_rebill=2`, `orig_card_brand_transid`
+- [ ] Return success/failure to Shopify
 
-## Key Features
+**Zero-Dollar Card Updates:**
+- [ ] Accept new card from Shopify
+- [ ] Send to Inovio with `request_action=CCAUTHORIZE`, `li_value_1=0.00`
+- [ ] Extract `CARD_BRAND_TRANSID` from response
+- [ ] **Return Network Transaction ID to Shopify**
 
-### 1. Pre-Filled Test Data
-All card and billing information is pre-filled with valid test data. You only need to:
-- Enter your Inovio API credentials once at the top
-- Check "Disable Fraud Scrub Rules" for testing
-- Click buttons to test each flow
+### Key Takeaways
 
-### 2. Auto-Population of Network Transaction ID
-After Step 1 of the Subscription Flow completes:
-- The Network Transaction ID is **automatically filled** into Step 2
-- The page **scrolls** to show Step 2
-- The field **pulses green** to show it was auto-filled
-- A **success message** confirms Step 2 is ready
+1. **Network Transaction ID is critical** - Shopify needs this to vault cards for subscriptions
+2. **Renewals don't use CVV** - Just PAN + Network Transaction ID
+3. **Three distinct flows** - One-time (no vaulting), subscription (vault with ID), card update (re-vault with new ID)
+4. **The code shows exact implementation** - Review `src/server.js` for detailed comments
 
-### 3. Visual Feedback
-- See exact JSON requests sent to Inovio
-- See complete JSON responses from Inovio
-- Network Transaction IDs highlighted in **large green boxes**
-- **Copy to clipboard** buttons for easy copying
-- Color-coded success/error messages
+### Testing This Demo
 
-### 4. Simplified Forms
-- **One-Time:** Just enter amount
-- **Subscription Initial:** Just enter amount
-- **Subscription Renewal:** Network Transaction ID + amount (auto-filled from Step 1)
-- **Card Update:** Just click the button (no fields)
+1. Enter your real Inovio credentials
+2. Check "Disable Fraud Scrub Rules" (for testing)
+3. Run through all three flows
+4. See exact requests/responses
+5. Use the code patterns in your implementation
 
-## Integration with Inovio
+## Common Issues
 
-### Request Format
+**Transaction Declined (Scrub Decline or Invalid CPF):**
+- Check the "Disable Fraud Scrub Rules" checkbox at the top
+- Leave Merchant Account ID blank
 
-All requests are sent to:
-```
-https://api.inoviopay.com/payment/pmt_service.cfm
-```
-
-**Required Parameters:**
-- `req_username` - Your Inovio API username
-- `req_password` - Your Inovio API password
-- `request_action` - Action type (CCAUTHCAP for sales, CCAUTHORIZE for $0 auth)
-- `site_id` - Your site ID
-- `request_response_format` - JSON
-- `request_api_version` - 4.12
-- Payment and customer data fields
-
-**Optional Parameters:**
-- `merch_acct_id` - Your merchant account ID (leave blank to use default)
-- `REQUEST_SCRUB_FLAG` - Set to `0` to disable fraud screening for testing
-
-### Response Format
-
-Inovio returns JSON with fields including:
-- `TRANS_STATUS_NAME` - Transaction status
-- `TRANS_ID` - Transaction ID
-- `CARD_BRAND_TRANSID` - Network Transaction ID (for subscriptions)
-- `PROC_AUTH_RESPONSE` - Processor authorization code
-- Plus many other fields (see API.md for complete documentation)
-
-## Customization
-
-### Using Your Own Credentials
-
-Instead of test credentials, you can enter your production Inovio credentials in the global credentials section at the top of the page.
-
-### Modifying for Production
-
-1. **Security:** Add authentication/authorization to protect API endpoints
-2. **Logging:** Implement comprehensive logging for debugging
-3. **Error Handling:** Add retry logic and better error messages
-4. **Validation:** Add server-side validation for all inputs
-5. **PCI Compliance:** Ensure your deployment meets PCI-DSS requirements
-
-## Troubleshooting
-
-### Container Issues
-
-**Problem:** Container won't start
-```bash
-# Check logs
-docker-compose logs
-
-# Rebuild container
-docker-compose down
-docker-compose up --build
-```
-
-### API Connection Issues
-
-**Problem:** "No response from Inovio API"
-- Check your internet connection
-- Verify credentials are correct
-- Ensure Inovio API is accessible from your network
-
-### Transaction Declined
-
-**Problem:** Transactions getting "Scrub Decline" (error 700) or "Invalid CPF" (error 707)
-
-**Solution:** Check the **"Disable Fraud Scrub Rules"** checkbox at the top of the page. This sets `REQUEST_SCRUB_FLAG=0` which bypasses fraud screening for testing.
-
-**Problem:** Other transaction declines
-- Verify your Inovio credentials are correct
-- The pre-filled card number is: 4111111111111111
-- Expiry date is: 122030 (December 2030)
-- CVV is: 123
-- Leave Merchant Account ID **blank** (optional field)
-
-### Network Transaction ID Missing
-
-**Problem:** Network Transaction ID not returned
-- Verify the response includes CARD_BRAND_TRANSID field
-- Check processor configuration supports tokenization
-- Review Inovio API response for error messages
-
-## For Ann's Team - Quick Reference
-
-### What You Need to Implement
-
-**1. One-Time Payments:**
-- Accept payment info from Shopify
-- Send to Inovio with `request_action=CCAUTHCAP`
-- Return success/failure to Shopify
-- Done!
-
-**2. Initial Subscription Payments:**
-- Accept payment info from Shopify
-- Send to Inovio with `request_action=CCAUTHCAP` and `request_rebill=1`
-- Extract `CARD_BRAND_TRANSID` from Inovio response
-- **Return this Network Transaction ID to Shopify** (critical!)
-- Shopify stores this ID for future renewals
-
-**3. Subscription Renewal Payments:**
-- Shopify sends: PAN + Network Transaction ID (**no CVV**)
-- Send to Inovio with `request_action=CCAUTHCAP`, `request_rebill=2`, and `orig_card_brand_transid=<the Network Transaction ID>`
-- Return success/failure to Shopify
-
-**4. Card Updates:**
-- Accept new card info from Shopify
-- Send to Inovio with `request_action=CCAUTHORIZE` and `li_value_1=0.00`
-- Extract `CARD_BRAND_TRANSID` from response
-- **Return this Network Transaction ID to Shopify**
-- Shopify updates their records with the new card's ID
-
-### Critical Points
-
-✓ **Always return the Network Transaction ID to Shopify** for initial subscriptions and card updates
-✓ **Renewals don't require CVV** - just PAN + Network Transaction ID
-✓ **Use the same Network Transaction ID** throughout the subscription lifetime
-✓ **Zero-dollar auths validate cards without charging**
-
-### Testing with This Demo
-
-1. Enter your real Inovio credentials at the top
-2. Check "Disable Fraud Scrub Rules"
-3. Test all three flows to see the exact requests/responses
-4. Copy the code patterns for your implementation
+**Network Transaction ID Missing:**
+- Verify transaction was approved
+- Check Inovio response for `CARD_BRAND_TRANSID`, `PROC_REFERENCE_NUM`, or `PROC_RETRIEVAL_NUM`
 
 ## References
 
-- Full Inovio API documentation: See `API.md` in this repository
-- Shopify requirements: See `plan.txt` in this repository
-- Inovio API Version: 4.12
-- API Endpoint: https://api.inoviopay.com/payment/pmt_service.cfm
+- Complete Inovio API documentation: `API.md`
+- Ann's integration requirements: `plan.txt`
+- Inovio API endpoint: https://api.inoviopay.com/payment/pmt_service.cfm
+- API version: 4.12
 
-## Support
+## Architecture
 
-For questions about:
-- **This demo:** Contact Frank Gibbs
-- **Inovio API:** Contact Inovio Client Services
-- **Shopify integration:** Contact Shopify Developer Support
+**Backend:** Node.js + Express
+**Frontend:** HTML/CSS/JavaScript
+**Containerization:** Docker
+**API Format:** URL-encoded requests, JSON responses
 
-## License
-
-MIT License - Free to use and modify for your integration needs.
+All technical details and field documentation are in the code comments (`src/server.js` and `src/inovioClient.js`).
