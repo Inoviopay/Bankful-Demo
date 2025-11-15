@@ -65,6 +65,9 @@ docker-compose down
 
 **What Shopify Needs:** Network Transaction ID to vault the card for future renewals.
 
+![Subscription Flow Diagram](SubscriptionFlow.png)
+*Visual overview of the two-step subscription process: Initial payment returns Network Transaction ID, which is used for all future renewals without CVV.*
+
 #### Step 1: Initial Subscription Payment
 
 **What the Demo Shows:**

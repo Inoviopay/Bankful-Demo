@@ -12,6 +12,9 @@ body {
     line-height: 1.6;
 }
 
+/* ============================================================================
+   CONTAINER - Centered layout
+   ============================================================================ */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -21,45 +24,70 @@ body {
     overflow: hidden;
 }
 
+/* ============================================================================
+   HEADER - Compact design
+   ============================================================================ */
 header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 40px;
+    padding: 20px 30px;
     text-align: center;
 }
 
 header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 1.8rem;
+    margin-bottom: 5px;
     font-weight: 700;
 }
 
 .subtitle {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     opacity: 0.95;
 }
 
+/* ============================================================================
+   SETTINGS SECTION
+   ============================================================================ */
 .credentials-section {
     background: #f8f9fa;
-    padding: 30px 40px;
-    border-bottom: 3px solid #e9ecef;
+    padding: 30px;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
 }
 
-.credentials-section h2 {
+.credentials-section h3 {
     color: #333;
-    margin-bottom: 10px;
-    font-size: 1.5rem;
+    margin-bottom: 15px;
+    margin-top: 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.credentials-section h3:first-child {
+    margin-top: 0;
+}
+
+.credentials-section h4 {
+    color: #666;
+    font-size: 1rem;
+    margin-top: 25px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .info-text {
     color: #666;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
 }
 
+/* ============================================================================
+   FORM STYLES
+   ============================================================================ */
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
     margin-bottom: 20px;
 }
 
@@ -75,16 +103,16 @@ header h1 {
 .form-group label {
     font-weight: 600;
     color: #333;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
 }
 
 .form-group input,
 .form-group select {
-    padding: 12px;
+    padding: 10px;
     border: 2px solid #e9ecef;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     transition: border-color 0.3s;
 }
 
@@ -94,19 +122,15 @@ header h1 {
     border-color: #667eea;
 }
 
-.test-credentials {
-    text-align: center;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #dee2e6;
-}
-
 .small-text {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: #666;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
 .btn-primary,
 .btn-secondary {
     padding: 12px 30px;
@@ -122,7 +146,7 @@ header h1 {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     width: 100%;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 .btn-primary:hover {
@@ -139,6 +163,9 @@ header h1 {
     background: #5a6268;
 }
 
+/* ============================================================================
+   TABS
+   ============================================================================ */
 .tabs {
     display: flex;
     background: #f8f9fa;
@@ -147,11 +174,11 @@ header h1 {
 
 .tab-button {
     flex: 1;
-    padding: 20px;
+    padding: 15px;
     background: transparent;
     border: none;
     border-bottom: 3px solid transparent;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #666;
     cursor: pointer;
@@ -169,8 +196,11 @@ header h1 {
     background: white;
 }
 
+/* ============================================================================
+   TAB CONTENT
+   ============================================================================ */
 .tab-content {
-    padding: 40px;
+    padding: 30px 40px;
 }
 
 .tab-pane {
@@ -183,38 +213,56 @@ header h1 {
 
 .tab-pane h2 {
     color: #333;
-    margin-bottom: 10px;
-    font-size: 2rem;
+    margin-bottom: 8px;
+    font-size: 1.6rem;
 }
 
 .flow-description {
     color: #666;
-    margin-bottom: 30px;
-    padding: 15px;
+    margin-bottom: 25px;
+    padding: 12px;
     background: #e7f3ff;
     border-left: 4px solid #2196f3;
     border-radius: 4px;
+    font-size: 0.9rem;
 }
 
 .flow-description strong {
     color: #2196f3;
 }
 
-.payment-form {
-    margin-bottom: 30px;
+/* ============================================================================
+   WORKFLOW SPLIT - Side-by-side Form + Results
+   ============================================================================ */
+.workflow-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    align-items: start;
 }
 
-.payment-form h3 {
-    color: #333;
-    margin: 30px 0 20px 0;
-    font-size: 1.3rem;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 10px;
+.workflow-form {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.workflow-results {
+    min-height: 200px;
+}
+
+/* ============================================================================
+   SUBSCRIPTION STEPS - Side-by-side
+   ============================================================================ */
+.subscription-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
 }
 
 .subscription-step {
-    margin-bottom: 50px;
-    padding: 30px;
+    padding: 20px;
     background: #f8f9fa;
     border-radius: 8px;
     border: 2px solid #e9ecef;
@@ -222,22 +270,49 @@ header h1 {
 
 .subscription-step h3 {
     color: #667eea;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+}
+
+.subscription-step .info-text {
     margin-bottom: 15px;
 }
 
+/* ============================================================================
+   PAYMENT FORMS
+   ============================================================================ */
+.payment-form {
+    margin-bottom: 0;
+}
+
+.payment-form h3 {
+    color: #333;
+    margin: 20px 0 15px 0;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+/* ============================================================================
+   ALERTS
+   ============================================================================ */
 .alert-info {
     background: #fff3cd;
     border: 1px solid #ffc107;
     border-left: 4px solid #ffc107;
-    padding: 15px;
+    padding: 12px;
     border-radius: 4px;
-    margin: 20px 0;
+    margin: 15px 0;
     color: #856404;
+    font-size: 0.85rem;
 }
 
+/* ============================================================================
+   RESULTS
+   ============================================================================ */
 .result-container {
-    margin-top: 30px;
-    padding: 20px;
+    margin-top: 20px;
+    padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
     border: 2px solid #e9ecef;
@@ -245,27 +320,28 @@ header h1 {
 
 .result-container h3 {
     color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
 }
 
 .result-section {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .result-section h4 {
     color: #667eea;
-    margin-bottom: 10px;
-    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-size: 1rem;
 }
 
 .json-display {
     background: #2d2d2d;
     color: #f8f8f2;
-    padding: 20px;
+    padding: 15px;
     border-radius: 6px;
     overflow-x: auto;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.5;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -275,14 +351,14 @@ header h1 {
     background: #d4edda;
     border: 2px solid #28a745;
     border-left: 5px solid #28a745;
-    padding: 15px;
+    padding: 12px;
     border-radius: 6px;
-    margin: 15px 0;
+    margin: 12px 0;
 }
 
 .highlight-box strong {
     color: #155724;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .highlight-box p {
@@ -294,9 +370,9 @@ header h1 {
     background: #f8d7da;
     border: 2px solid #dc3545;
     border-left: 5px solid #dc3545;
-    padding: 15px;
+    padding: 12px;
     border-radius: 6px;
-    margin: 15px 0;
+    margin: 12px 0;
     color: #721c24;
 }
 
@@ -317,7 +393,9 @@ header h1 {
     60%, 100% { content: '...'; }
 }
 
-/* Highlight animation for auto-filled fields */
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
 @keyframes highlight-pulse {
     0% {
         background-color: #d4edda;
@@ -341,21 +419,34 @@ header h1 {
     background: #d4edda;
     border: 2px solid #28a745;
     border-left: 5px solid #28a745;
-    padding: 15px;
+    padding: 12px;
     border-radius: 6px;
-    margin: 15px 0;
+    margin: 12px 0;
     color: #155724;
     font-weight: 600;
+    font-size: 0.9rem;
 }
 
-/* Responsive Design */
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+@media (max-width: 1200px) {
+    .workflow-split {
+        grid-template-columns: 1fr;
+    }
+
+    .subscription-steps {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     header h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
 
     .subtitle {
-        font-size: 1rem;
+        font-size: 0.85rem;
     }
 
     .tabs {
@@ -378,5 +469,13 @@ header h1 {
 
     .tab-content {
         padding: 20px;
+    }
+
+    .workflow-split {
+        grid-template-columns: 1fr;
+    }
+
+    .subscription-steps {
+        grid-template-columns: 1fr;
     }
 }
