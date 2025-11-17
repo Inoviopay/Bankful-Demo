@@ -63,10 +63,14 @@ docker-compose down
 
 ### Flow 2: Subscription Payment (Two Steps)
 
-**What Shopify Needs:** Network Transaction ID to vault the card for future renewals.
+**What Shopify Needs:** A way to process recurring payments without CVV.
+
+**Two Options Available:**
+- **Option 1:** Network Transaction ID approach (demonstrated in this app)
+- **Option 2:** CUST_ID approach (works with processors that don't support Network Transaction ID)
 
 ![Subscription Flow Diagram](SubscriptionFlow.png)
-*Visual overview of the two-step subscription process: Initial payment returns Network Transaction ID, which is used for all future renewals without CVV.*
+*Visual overview of the two-step subscription process: Initial payment returns an identifier (Network Transaction ID or CUST_ID), which is used for all future renewals without CVV.*
 
 #### Step 1: Initial Subscription Payment
 
@@ -77,11 +81,15 @@ docker-compose down
 - **Watch:** The value auto-fills into Step 2 below
 - **Watch:** Page scrolls to Step 2 with success message
 
-**Implementation:** Process payment with Inovio using `request_rebill=1`, extract `CARD_BRAND_TRANSID` from response, return this Network Transaction ID to Shopify.
+**Implementation - Option 1 (Network Transaction ID):**
+Process payment with Inovio, extract `CARD_BRAND_TRANSID` from response, return this Network Transaction ID to Shopify.
+
+**Implementation - Option 2 (CUST_ID):**
+Process payment with Inovio, extract `CUST_ID` from response, store this for future renewals.
 
 #### Step 2: Subscription Renewal
 
-**What Shopify Needs:** Process recurring payment using PAN + Network Transaction ID (no CVV).
+**What Shopify Needs:** Process recurring payment without CVV.
 
 **What the Demo Shows:**
 - Network Transaction ID and amount are already filled in from Step 1
@@ -89,7 +97,13 @@ docker-compose down
 - Click "Process Renewal Payment"
 - See the request includes PAN + Network Transaction ID but NOT CVV
 
-**Implementation:** When Shopify sends renewal request with PAN + Network Transaction ID (no CVV), process payment with Inovio using `request_rebill=2` and `orig_card_brand_transid`, return success/failure to Shopify.
+**Implementation - Option 1 (Network Transaction ID - Current Demo):**
+When Shopify sends renewal request with PAN + Network Transaction ID (no CVV), process payment with Inovio using `orig_card_brand_transid` parameter, return success/failure to Shopify.
+
+**Implementation - Option 2 (CUST_ID):**
+Process payment with Inovio using `CUST_ID` and `request_rebill=1`, return success/failure to Shopify.
+
+**Benefit of Option 2:** Works with processors that don't support Network Transaction ID, providing broader processor compatibility.
 
 ---
 
@@ -107,16 +121,21 @@ docker-compose down
 
 ## Understanding the Network Transaction ID
 
-The Network Transaction ID is returned by Inovio in these response fields (check in this order):
-1. `CARD_BRAND_TRANSID` (primary)
-2. `PROC_REFERENCE_NUM` (fallback)
-3. `PROC_RETRIEVAL_NUM` (fallback)
+The Network Transaction ID is returned by Inovio in the `CARD_BRAND_TRANSID` response field. This is the card scheme transaction ID from the card network (Visa, Mastercard, etc.).
 
-**When to return it to Shopify:**
+**When to return it to Shopify (Option 1 - Network Transaction ID approach):**
 - ✓ Initial subscription payment
 - ✓ Zero-dollar card updates
 - ✗ One-time transactions (not needed)
 - ✗ Subscription renewals (used as input, not output)
+
+**Alternative: CUST_ID Approach (Option 2):**
+
+If your processor doesn't support Network Transaction ID, you can use `CUST_ID` instead:
+- Extract `CUST_ID` from the initial subscription payment response
+- Store it for future use
+- Pass it with `request_rebill=1` for subscription renewals
+- **Benefit:** Provides broader processor compatibility for merchants whose processors don't support Network Transaction ID
 
 ## What's in the Code
 
@@ -149,16 +168,28 @@ The Network Transaction ID is returned by Inovio in these response fields (check
 - [ ] Send to Inovio with `request_action=CCAUTHCAP`
 - [ ] Return success/failure to Shopify
 
-**Initial Subscription Payments:**
+**Initial Subscription Payments (Option 1 - Network Transaction ID):**
 - [ ] Accept payment from Shopify
-- [ ] Send to Inovio with `request_action=CCAUTHCAP` and `request_rebill=1`
+- [ ] Send to Inovio with `request_action=CCAUTHCAP`
 - [ ] Extract `CARD_BRAND_TRANSID` from response
 - [ ] **Return Network Transaction ID to Shopify**
 
-**Subscription Renewal Payments:**
+**Initial Subscription Payments (Option 2 - CUST_ID):**
+- [ ] Accept payment from Shopify
+- [ ] Send to Inovio with `request_action=CCAUTHCAP`
+- [ ] Extract `CUST_ID` from response
+- [ ] Store CUST_ID for future renewals
+
+**Subscription Renewal Payments (Option 1 - Network Transaction ID):**
 - [ ] Accept PAN + Network Transaction ID from Shopify (no CVV)
-- [ ] Send to Inovio with `request_action=CCAUTHCAP`, `request_rebill=2`, `orig_card_brand_transid`
+- [ ] Send to Inovio with `request_action=CCAUTHCAP` and `orig_card_brand_transid`
 - [ ] Return success/failure to Shopify
+
+**Subscription Renewal Payments (Option 2 - CUST_ID):**
+- [ ] Accept payment details from Shopify (no CVV)
+- [ ] Send to Inovio with `request_action=CCAUTHCAP`, `CUST_ID`, and `request_rebill=1`
+- [ ] Return success/failure to Shopify
+- [ ] **Benefit:** Works with processors that don't support Network Transaction ID
 
 **Zero-Dollar Card Updates:**
 - [ ] Accept new card from Shopify
