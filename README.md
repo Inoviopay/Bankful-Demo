@@ -124,6 +124,7 @@ For subscription payments, Shopify requires a "Network Transaction ID" to vault 
 - This `CUST_ID` is what you return to Shopify as the "Network Transaction ID"
 - Shopify stores this value and sends it back for each renewal
 - On renewals, you pass the `CUST_ID` with `REQUEST_REBILL=1` to process the payment
+- Inovio uses the `CUST_ID` to look up the network transaction ID and passes it to the processor when supported
 
 **When to return CUST_ID to Shopify:**
 - ✓ Initial subscription payment (return `CUST_ID` as Network Transaction ID)
