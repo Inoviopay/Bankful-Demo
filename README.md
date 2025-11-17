@@ -85,7 +85,7 @@ You have two choices for handling subscription renewals:
   - Step 2: Pass `CUST_ID` with `REQUEST_REBILL=1` for renewal payments (no CVV needed)
 - **When to use:** Shopify can pass REQUEST_REBILL=1 (preferred approach)
 - **Note:** CUST_ID can be stored as the Network Transaction ID on the Shopify side
-- **Benefit:** Backwards compatible with all processors, including those that don't support Network Transaction ID
+- **Benefit:** Backwards compatible with processors that don't support NETWORK TRANSACTION IDs yet.
 
 **Note:** The demo below shows Option 1 (Network Transaction ID approach).
 
