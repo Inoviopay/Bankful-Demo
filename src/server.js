@@ -185,29 +185,27 @@ app.post('/api/one-time', async (req, res) => {
  * Subscription Initial Payment Endpoint
  *
  * PURPOSE:
- * Process the first payment for a subscription and get the Network Transaction ID
+ * Process the first payment for a subscription and get the CUST_ID
  * that Shopify will use to vault the card for future renewals.
  *
  * SHOPIFY INTEGRATION:
  * - When Shopify initiates a new subscription, use this flow
- * - Send the transaction to Inovio with request_action=CCAUTHCAP and request_rebill=1
- * - Extract the Network Transaction ID from the response
- * - **CRITICAL**: Return this Network Transaction ID to Shopify
+ * - Send the transaction to Inovio with REQUEST_ACTION=CCAUTHCAP and REQUEST_REBILL=1
+ * - Extract CUST_ID from the response
+ * - **CRITICAL**: Return CUST_ID to Shopify as the "Network Transaction ID"
  * - Shopify stores this ID and sends it back for all future renewals
  *
  * KEY PARAMETERS:
- * - request_action: CCAUTHCAP (authorize and capture)
- * - request_rebill: "1" (indicates this is an initial subscription payment)
+ * - REQUEST_ACTION: CCAUTHCAP (authorize and capture)
  * - All standard card, customer, and billing fields
  *
- * NETWORK TRANSACTION ID:
- * This is the most important field in the response. Look for it in this order:
- * 1. CARD_BRAND_TRANSID (primary field - always check this first)
- * 2. PROC_REFERENCE_NUM (fallback if CARD_BRAND_TRANSID is empty)
- * 3. PROC_RETRIEVAL_NUM (second fallback)
+ * CUST_ID (Network Transaction ID for Shopify):
+ * This is the most important field in the response. Inovio returns CUST_ID which
+ * you return to Shopify as the "Network Transaction ID". This approach is backwards
+ * compatible with processors that don't support NETWORK TRANSACTION IDs yet.
  *
- * This ID is unique to the card and merchant account. Shopify uses it to charge
- * the same card for renewals without requiring the CVV again.
+ * This CUST_ID is unique to the customer. Shopify uses it to charge the same card
+ * for renewals without requiring the CVV again.
  */
 app.post('/api/subscription-initial', async (req, res) => {
   try {
@@ -261,12 +259,7 @@ app.post('/api/subscription-initial', async (req, res) => {
       // ----------------------------------------------------------------
       li_prod_id_1: credentials.productId,
       li_value_1: payment.amount,
-      li_count_1: 1,
-
-      // ----------------------------------------------------------------
-      // SUBSCRIPTION FLAG - This is what makes it a subscription
-      // ----------------------------------------------------------------
-      request_rebill: '1'                     // "1" = Initial subscription payment
+      li_count_1: 1
     };
 
     // Add optional parameters
@@ -282,22 +275,24 @@ app.post('/api/subscription-initial', async (req, res) => {
     const response = await inovioClient.processPayment(requestData);
 
     // ----------------------------------------------------------------
-    // EXTRACT NETWORK TRANSACTION ID - CRITICAL FOR SHOPIFY
+    // EXTRACT CUST_ID - CRITICAL FOR SHOPIFY
     // ----------------------------------------------------------------
     // This is the unique identifier that Shopify needs to vault the card.
-    // CARD_BRAND_TRANSID is the card scheme transaction ID from the card network.
-    const networkTransactionId = response.CARD_BRAND_TRANSID;
+    // CUST_ID is returned by Inovio and should be sent to Shopify as the
+    // "Network Transaction ID". This approach is backwards compatible with
+    // all processors, including those that don't support NETWORK TRANSACTION IDs yet.
+    const networkTransactionId = response.CUST_ID;
 
     // ----------------------------------------------------------------
     // SHOPIFY INTEGRATION POINT
     // ----------------------------------------------------------------
     // When returning the response to Shopify:
     // 1. Check if payment was approved (response.TRANS_STATUS_NAME === "APPROVED")
-    // 2. If approved, return the networkTransactionId to Shopify
+    // 2. If approved, return the CUST_ID to Shopify as the "Network Transaction ID"
     // 3. Shopify will store this ID and associate it with the customer's subscription
-    // 4. For all future renewals, Shopify will send you this ID (not the CVV)
+    // 4. For all future renewals, Shopify will send you this CUST_ID (not the CVV)
     //
-    // IMPORTANT: Without this ID, subscription renewals will fail!
+    // IMPORTANT: Without this CUST_ID, subscription renewals will fail!
     // ----------------------------------------------------------------
 
     res.json({
@@ -323,33 +318,34 @@ app.post('/api/subscription-initial', async (req, res) => {
  * Subscription Renewal Payment Endpoint
  *
  * PURPOSE:
- * Process recurring subscription payments using the Network Transaction ID
+ * Process recurring subscription payments using the CUST_ID
  * from the initial payment. This flow does NOT require the CVV.
  *
  * SHOPIFY INTEGRATION:
  * - When a subscription renews, Shopify sends you:
  *   1. Card number (PAN)
  *   2. Expiry date
- *   3. Network Transaction ID (from the initial payment)
+ *   3. Network Transaction ID (which is the CUST_ID from the initial payment)
  *   4. **NO CVV** - Shopify doesn't store CVV for security reasons
  *
- * - Send the transaction to Inovio with request_action=CCAUTHCAP and request_rebill=2
- * - Include the orig_card_brand_transid parameter with the Network Transaction ID
+ * - Send the transaction to Inovio with REQUEST_ACTION=CCAUTHCAP and REQUEST_REBILL=1
+ * - Include the CUST_ID parameter (sent by Shopify as "Network Transaction ID")
  * - Inovio will process the payment without requiring CVV
  *
  * KEY PARAMETERS:
- * - request_action: CCAUTHCAP (authorize and capture)
- * - request_rebill: "2" (indicates this is a renewal payment)
- * - orig_card_brand_transid: The Network Transaction ID from the initial payment
+ * - REQUEST_ACTION: CCAUTHCAP (authorize and capture)
+ * - REQUEST_REBILL: "1" (indicates this is a renewal payment)
+ * - CUST_ID: The customer ID from the initial payment (sent by Shopify as Network Transaction ID)
  * - pmt_numb: Card number (PAN)
  * - pmt_expiry: Expiry date
  * - **NO pmt_key (CVV)** - Not required for renewals
  *
  * IMPORTANT NOTES:
- * - The Network Transaction ID must match the card number being charged
+ * - The CUST_ID must match the customer being charged
  * - If the customer updated their card, you need to run a new initial payment
- *   or zero-dollar authorization to get a new Network Transaction ID
+ *   or zero-dollar authorization to get a new CUST_ID
  * - Do NOT send CVV in renewal requests - it's not needed and may cause errors
+ * - This approach is backwards compatible with processors that don't support NETWORK TRANSACTION IDs yet
  */
 app.post('/api/subscription-renewal', async (req, res) => {
   try {
@@ -383,11 +379,11 @@ app.post('/api/subscription-renewal', async (req, res) => {
       // NOTE: pmt_key (CVV) is NOT included for renewal payments
 
       // ----------------------------------------------------------------
-      // NETWORK TRANSACTION ID - This replaces the CVV
+      // CUST_ID - This replaces the CVV
       // ----------------------------------------------------------------
-      // This is the ID that was returned from the initial subscription payment.
-      // Shopify sends this to you with each renewal request.
-      orig_card_brand_transid: payment.networkTransactionId,
+      // This is the CUST_ID that was returned from the initial subscription payment.
+      // Shopify sends this to you as the "Network Transaction ID" with each renewal request.
+      CUST_ID: payment.networkTransactionId,
 
       // ----------------------------------------------------------------
       // CUSTOMER DATA
@@ -406,7 +402,7 @@ app.post('/api/subscription-renewal', async (req, res) => {
       // ----------------------------------------------------------------
       // SUBSCRIPTION RENEWAL FLAG
       // ----------------------------------------------------------------
-      request_rebill: '2'                     // "2" = Renewal payment
+      request_rebill: '1'                     // "1" = Renewal payment
     };
 
     // Add optional parameters
@@ -425,8 +421,7 @@ app.post('/api/subscription-renewal', async (req, res) => {
     // SHOPIFY INTEGRATION POINT
     // ----------------------------------------------------------------
     // For renewal payments, you only need to check if the payment succeeded.
-    // No need to extract the Network Transaction ID - you already have it
-    // from the initial payment.
+    // No need to extract the CUST_ID - you already have it from the initial payment.
     //
     // Return success/failure to Shopify:
     // - If APPROVED: Subscription continues, customer is charged
@@ -461,20 +456,22 @@ app.post('/api/subscription-renewal', async (req, res) => {
  *
  * SHOPIFY INTEGRATION:
  * - When a customer wants to update their card for a subscription, use this flow
- * - Send a $0.00 authorization to Inovio with request_action=CCAUTHORIZE
- * - Extract the Network Transaction ID from the response
- * - **CRITICAL**: Return this new Network Transaction ID to Shopify
+ * - Send a $0.00 authorization to Inovio with REQUEST_ACTION=CCAUTHORIZE
+ * - Extract CUST_ID from the response
+ * - **CRITICAL**: Return this new CUST_ID to Shopify as the "Network Transaction ID"
  * - Shopify will update their records and use this new ID for future renewals
  *
  * KEY PARAMETERS:
- * - request_action: CCAUTHORIZE (authorization only, no capture)
- * - li_value_1: "0.00" (zero-dollar amount)
+ * - REQUEST_ACTION: CCAUTHORIZE (authorization only, no capture)
+ * - LI_VALUE_1: "0.00" (zero-dollar amount)
  * - All standard card, customer, and billing fields
  * - CVV is required (just like a regular transaction)
  *
- * NETWORK TRANSACTION ID:
- * Just like the initial subscription payment, this flow returns a Network
- * Transaction ID. This new ID should replace the old one in Shopify's records.
+ * CUST_ID (Network Transaction ID for Shopify):
+ * Just like the initial subscription payment, this flow returns a CUST_ID which
+ * you return to Shopify as the "Network Transaction ID". This new ID should
+ * replace the old one in Shopify's records. This approach is backwards compatible
+ * with processors that don't support NETWORK TRANSACTION IDs yet.
  *
  * IMPORTANT NOTES:
  * - The card is validated but not charged
@@ -551,23 +548,25 @@ app.post('/api/card-update', async (req, res) => {
     const response = await inovioClient.processPayment(requestData);
 
     // ----------------------------------------------------------------
-    // EXTRACT NETWORK TRANSACTION ID - CRITICAL FOR SHOPIFY
+    // EXTRACT CUST_ID - CRITICAL FOR SHOPIFY
     // ----------------------------------------------------------------
-    // This is the new Network Transaction ID for the updated card.
-    // CARD_BRAND_TRANSID is the card scheme transaction ID from the card network.
-    const networkTransactionId = response.CARD_BRAND_TRANSID;
+    // This is the new CUST_ID for the updated card.
+    // CUST_ID is returned by Inovio and should be sent to Shopify as the
+    // "Network Transaction ID". This approach is backwards compatible with
+    // all processors, including those that don't support NETWORK TRANSACTION IDs yet.
+    const networkTransactionId = response.CUST_ID;
 
     // ----------------------------------------------------------------
     // SHOPIFY INTEGRATION POINT
     // ----------------------------------------------------------------
     // When returning the response to Shopify:
     // 1. Check if authorization was approved (response.TRANS_STATUS_NAME === "APPROVED")
-    // 2. If approved, return the new networkTransactionId to Shopify
-    // 3. Shopify will update the subscription with this new ID
-    // 4. Future renewals will use this new ID (not the old one)
+    // 2. If approved, return the new CUST_ID to Shopify as the "Network Transaction ID"
+    // 3. Shopify will update the subscription with this new CUST_ID
+    // 4. Future renewals will use this new CUST_ID (not the old one)
     //
-    // IMPORTANT: This new ID is associated with the new card, not the old card.
-    // Make sure Shopify replaces the old ID with this new one.
+    // IMPORTANT: This new CUST_ID is associated with the new card, not the old card.
+    // Make sure Shopify replaces the old CUST_ID with this new one.
     // ----------------------------------------------------------------
 
     res.json({

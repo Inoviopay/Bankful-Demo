@@ -139,7 +139,7 @@ async function handleSubscriptionInitial(e) {
         if (data.success) {
             resultOutput.innerHTML = formatSuccessResponse(data, 'subscription-initial');
 
-            // Auto-fill renewal form with Network Transaction ID and amount
+            // Auto-fill renewal form with CUST_ID (Network Transaction ID) and amount
             if (data.networkTransactionId) {
                 const networkIdField = document.getElementById('sr-networkTransactionId');
                 const amountField = document.getElementById('sr-amount');
@@ -155,10 +155,10 @@ async function handleSubscriptionInitial(e) {
 
                 const successMessage = document.createElement('div');
                 successMessage.className = 'success-message';
-                successMessage.innerHTML = '✓ Step 2 is ready! Network Transaction ID and amount have been auto-filled.';
+                successMessage.innerHTML = '✓ Step 2 is ready! CUST_ID (Network Transaction ID) and amount have been auto-filled.';
                 step2Section.insertBefore(successMessage, step2Section.querySelector('form'));
 
-                // Add highlight animation to the Network Transaction ID field
+                // Add highlight animation to the CUST_ID field
                 networkIdField.classList.add('auto-filled');
                 setTimeout(() => networkIdField.classList.remove('auto-filled'), 2000);
 
@@ -256,23 +256,23 @@ async function handleCardUpdate(e) {
 function formatSuccessResponse(data, flowType) {
     let html = '';
 
-    // Network Transaction ID highlight for subscription and card update flows
+    // CUST_ID (Network Transaction ID) highlight for subscription and card update flows
     if (flowType === 'subscription-initial' || flowType === 'card-update') {
         if (data.networkTransactionId) {
             html += `
                 <div class="highlight-box">
-                    <strong>✓ Network Transaction ID (for Shopify):</strong>
+                    <strong>✓ CUST_ID (Network Transaction ID for Shopify):</strong>
                     <p style="font-family: monospace; font-size: 1.3rem; margin-top: 10px; font-weight: bold;">
                         ${data.networkTransactionId}
                     </p>
-                    <button onclick="navigator.clipboard.writeText('${data.networkTransactionId}').then(() => alert('Network Transaction ID copied to clipboard!'))"
+                    <button onclick="navigator.clipboard.writeText('${data.networkTransactionId}').then(() => alert('CUST_ID copied to clipboard!'))"
                             style="margin-top: 10px; padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
                         Copy to Clipboard
                     </button>
                     <p style="margin-top: 10px; font-size: 0.95rem;">
                         ${flowType === 'subscription-initial'
-                            ? '<strong>This value has been automatically filled into Step 2 below.</strong> Shopify will vault this card using this Network Transaction ID for future renewals.'
-                            : 'Shopify will use this Network Transaction ID to update the card on file for subscriptions.'}
+                            ? '<strong>This value has been automatically filled into Step 2 below.</strong> Send this CUST_ID to Shopify as the "Network Transaction ID" - Shopify will vault this card for future renewals. Backwards compatible with processors that don\'t support NETWORK TRANSACTION IDs yet.'
+                            : 'Send this CUST_ID to Shopify as the "Network Transaction ID" - Shopify will update the card on file for subscriptions. Backwards compatible with processors that don\'t support NETWORK TRANSACTION IDs yet.'}
                     </p>
                 </div>
             `;
@@ -306,14 +306,14 @@ function formatSuccessResponse(data, flowType) {
         if (data.response.TRANS_ID) {
             html += `<p><strong>Transaction ID:</strong> ${data.response.TRANS_ID}</p>`;
         }
+        if (data.response.CUST_ID) {
+            html += `<p><strong>Customer ID (CUST_ID):</strong> <span style="color: #28a745; font-weight: bold;">${data.response.CUST_ID}</span> <em style="font-size: 0.9em;">(Used for subscriptions)</em></p>`;
+        }
         if (data.response.TRANS_VALUE) {
             html += `<p><strong>Amount:</strong> ${data.response.TRANS_VALUE} ${data.response.CURR_CODE_ALPHA || ''}</p>`;
         }
         if (data.response.PROC_AUTH_RESPONSE) {
             html += `<p><strong>Processor Auth Code:</strong> ${data.response.PROC_AUTH_RESPONSE}</p>`;
-        }
-        if (data.response.CARD_BRAND_TRANSID) {
-            html += `<p><strong>Card Brand Transaction ID:</strong> ${data.response.CARD_BRAND_TRANSID}</p>`;
         }
         if (data.response.PROC_REFERENCE_NUM) {
             html += `<p><strong>Processor Reference Number:</strong> ${data.response.PROC_REFERENCE_NUM}</p>`;
@@ -338,9 +338,10 @@ function formatSuccessResponse(data, flowType) {
             <div class="result-section">
                 <h4>For Shopify Integration</h4>
                 <div style="background: #e7f3ff; padding: 15px; border-radius: 6px; border-left: 4px solid #2196f3;">
-                    <p>✓ Renewal processed using the Network Transaction ID from the initial subscription.</p>
+                    <p>✓ Renewal processed using CUST_ID (sent by Shopify as Network Transaction ID) with REQUEST_REBILL=1.</p>
                     <p>✓ Notice: CVV was NOT required for this renewal payment.</p>
-                    <p>✓ Shopify sends the PAN + Network Transaction ID for renewals.</p>
+                    <p>✓ Shopify sends PAN + CUST_ID (as Network Transaction ID) for renewals.</p>
+                    <p>✓ Backwards compatible with processors that don't support NETWORK TRANSACTION IDs yet.</p>
                 </div>
             </div>
         `;
