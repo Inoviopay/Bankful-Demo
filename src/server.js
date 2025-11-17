@@ -285,10 +285,8 @@ app.post('/api/subscription-initial', async (req, res) => {
     // EXTRACT NETWORK TRANSACTION ID - CRITICAL FOR SHOPIFY
     // ----------------------------------------------------------------
     // This is the unique identifier that Shopify needs to vault the card.
-    // Check these fields in order of priority:
-    const networkTransactionId = response.CARD_BRAND_TRANSID ||
-                                  response.PROC_REFERENCE_NUM ||
-                                  response.PROC_RETRIEVAL_NUM;
+    // CARD_BRAND_TRANSID is the card scheme transaction ID from the card network.
+    const networkTransactionId = response.CARD_BRAND_TRANSID;
 
     // ----------------------------------------------------------------
     // SHOPIFY INTEGRATION POINT
@@ -556,9 +554,8 @@ app.post('/api/card-update', async (req, res) => {
     // EXTRACT NETWORK TRANSACTION ID - CRITICAL FOR SHOPIFY
     // ----------------------------------------------------------------
     // This is the new Network Transaction ID for the updated card.
-    const networkTransactionId = response.CARD_BRAND_TRANSID ||
-                                  response.PROC_REFERENCE_NUM ||
-                                  response.PROC_RETRIEVAL_NUM;
+    // CARD_BRAND_TRANSID is the card scheme transaction ID from the card network.
+    const networkTransactionId = response.CARD_BRAND_TRANSID;
 
     // ----------------------------------------------------------------
     // SHOPIFY INTEGRATION POINT
